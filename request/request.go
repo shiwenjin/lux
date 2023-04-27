@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"crypto/tls"
 	"fmt"
+	"github.com/go-resty/resty/v2"
 	"io"
 	"net/http"
 	"strconv"
@@ -45,6 +46,8 @@ func SetOptions(opt Options) {
 	refer = opt.Refer
 	debug = opt.Debug
 }
+
+var Client = resty.New().SetTimeout(200 * time.Second)
 
 // Request base request
 func Request(method, url string, body io.Reader, headers map[string]string) (*http.Response, error) {
@@ -175,7 +178,7 @@ func Headers(url, refer string) (http.Header, error) {
 	headers := map[string]string{
 		"Referer": refer,
 	}
-	res, err := Request(http.MethodGet, url, nil, headers)
+	res, err := Request(http.MethodHead, url, nil, headers)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
