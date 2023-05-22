@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/tidwall/gjson"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -109,6 +111,10 @@ func New() extractors.Extractor {
 
 // Extract is the main function to extract the data.
 func (e *extractor) Extract(url string, option extractors.Options) ([]*extractors.Data, error) {
+	if option.Playlist {
+		return extractPlaylist(url)
+	}
+
 	html, err := request.Get(url, url, nil)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -215,4 +221,33 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 			URL:     url,
 		},
 	}, nil
+}
+
+func extractPlaylist(uri string) ([]*extractors.Data, error) {
+	uid := utils.MatchOneOf(uri, `/b/(\d+)/`)[1]
+	listUrl := fmt.Sprintf(`https://pcweb.api.mgtv.com/episode/list?collection_id=%s&size=100&callback=&page=1`, uid)
+
+	body, err := request.Client.R().Get(listUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	bodyJson := gjson.ParseBytes(body.Body())
+	if bodyJson.Get("code").Int() == 200 {
+		result := make([]*extractors.Data, 0)
+		bodyJson.Get("data.list").ForEach(func(key, value gjson.Result) bool {
+			realUrl, _ := url.JoinPath("https://www.mgtv.com", value.Get("url").String())
+			result = append(result, &extractors.Data{
+				Site:    "芒果TV mgtv.com",
+				URL:     realUrl,
+				Title:   value.Get("t3").String(),
+				Type:    extractors.DataTypeVideo,
+				Streams: make(map[string]*extractors.Stream),
+			})
+			return true
+		})
+		return result, nil
+	} else {
+		return nil, errors.New(bodyJson.Get("msg").String())
+	}
 }

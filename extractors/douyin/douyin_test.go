@@ -25,6 +25,12 @@ func TestDownload(t *testing.T) {
 				URL:   "https://v.douyin.com/LvCYKvV",
 				Title: "黑发限定#开春必备",
 			},
+		}, {
+			name: "image test",
+			args: test.Args{
+				URL:   "7.64 Ljp:/ 妈妈发现儿子会跷二郎腿，想分享一下喜悦，结果是爸爸穿反了两条腿# 爸爸带娃 # 搞笑 # 萌娃  https://v.douyin.com/U1Wjjf5/ 复制此链接，打开Dou音搜索，直接观看视频！",
+				Title: "黑发限定#开春必备",
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -34,4 +40,8 @@ func TestDownload(t *testing.T) {
 			test.Check(t, tt.args, data[0])
 		})
 	}
+}
+
+func TestName(t *testing.T) {
+	extractPlaylist("https://www.douyin.com/user/MS4wLjABAAAAhudOqr4jfJeVfF283LrAm73kgX-g2RtGIOV99KhaWsc")
 }

@@ -9,8 +9,9 @@ import (
 
 func TestDownload(t *testing.T) {
 	tests := []struct {
-		name string
-		args test.Args
+		name     string
+		args     test.Args
+		playlist bool
 	}{
 		{
 			name: "normal test 1",
@@ -38,11 +39,20 @@ func TestDownload(t *testing.T) {
 				Size:    453246944,
 				Quality: "超清",
 			},
+		}, {
+			name: "视频列表",
+			args: test.Args{
+				URL:     "https://www.mgtv.com/b/322865/4352046.html",
+				Title:   "向往的生活 第二季 先导片：何炅黄磊回归质朴生活",
+				Size:    453246944,
+				Quality: "超清",
+			},
+			playlist: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			New().Extract(tt.args.URL, extractors.Options{})
+			New().Extract(tt.args.URL, extractors.Options{Playlist: tt.playlist})
 		})
 	}
 }

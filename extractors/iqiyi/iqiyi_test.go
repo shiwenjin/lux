@@ -9,13 +9,15 @@ import (
 
 func TestDownload(t *testing.T) {
 	tests := []struct {
-		name string
-		args test.Args
+		name          string
+		args          test.Args
+		playlist      bool
+		shortPlaylist bool
 	}{
 		{
 			name: "normal test",
 			args: test.Args{
-				URL:     "http://www.iqiyi.com/v_19rrbdmaj0.html",
+				URL:     "https://www.iqiyi.com/v_1llt29653xc.html",
 				Title:   "新一轮降水将至 冷空气影响中东部地区",
 				Size:    2952228,
 				Quality: "896x504",
@@ -39,10 +41,51 @@ func TestDownload(t *testing.T) {
 				Quality: "1920x800",
 			},
 		},
+		{
+			name: "主页视频",
+			args: test.Args{
+				URL:     "https://www.iqiyi.com/u/520143092318950/videos",
+				Title:   "Shawn Mendes - Never Be Alone",
+				Size:    79921894,
+				Quality: "1920x800",
+			},
+			playlist: true,
+		},
+		{
+			name: "主页视频",
+			args: test.Args{
+				URL:     "https://www.iqiyi.com/u/520143092318950/videos",
+				Title:   "Shawn Mendes - Never Be Alone",
+				Size:    79921894,
+				Quality: "1920x800",
+			},
+		},
+		{
+			name: "主页短视频",
+			args: test.Args{
+				URL:     "https://www.iqiyi.com/u/520143092318950/videos",
+				Title:   "Shawn Mendes - Never Be Alone",
+				Size:    79921894,
+				Quality: "1920x800",
+			},
+			shortPlaylist: true,
+		},
+		{
+			name: "高清视频",
+			args: test.Args{
+				URL:     "https://www.iqiyi.com/v_14aoajaoai0.html",
+				Title:   "Shawn Mendes - Never Be Alone",
+				Size:    79921894,
+				Quality: "1920x800",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := New(SiteTypeIqiyi).Extract(tt.args.URL, extractors.Options{})
+			data, err := New(SiteTypeIqiyi).Extract(tt.args.URL, extractors.Options{
+				Playlist:      tt.playlist,
+				ShortPlaylist: tt.shortPlaylist,
+			})
 			test.CheckError(t, err)
 			test.Check(t, tt.args, data[0])
 		})

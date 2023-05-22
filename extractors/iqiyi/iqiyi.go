@@ -3,7 +3,12 @@ package iqiyi
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/iawia002/lia/array"
+	"github.com/samber/lo"
+	"github.com/spf13/cast"
 	"math/rand"
+	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -21,29 +26,13 @@ func init() {
 	extractors.Register("iq", New(SiteTypeIQ))
 }
 
-type iqiyi struct {
-	Code string `json:"code"`
-	Data struct {
-		VP struct {
-			Du  string `json:"du"`
-			Tkl []struct {
-				Vs []struct {
-					Bid   int    `json:"bid"`
-					Scrsz string `json:"scrsz"`
-					Vsize int64  `json:"vsize"`
-					Fs    []struct {
-						L string `json:"l"`
-						B int64  `json:"b"`
-					} `json:"fs"`
-				} `json:"vs"`
-			} `json:"tkl"`
-		} `json:"vp"`
-	} `json:"data"`
-	Msg string `json:"msg"`
-}
-
-type iqiyiURL struct {
-	L string `json:"l"`
+var header = map[string]string{
+	"Accept":          "*/*",
+	"Accept-Encoding": "*",
+	"Accept-Language": "zh-CN,zh;q=0.9",
+	"User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+	"Host":            "iqiyihao.iqiyi.com",
+	"Connection":      "keep-alive",
 }
 
 // SiteType indicates the site type of iqiyi
@@ -56,6 +45,25 @@ const (
 	SiteTypeIqiyi
 	iqReferer    = "https://www.iq.com"
 	iqiyiReferer = "https://www.iqiyi.com"
+)
+
+const (
+	// getVideos 获取视频id列表
+	getVideos = `https://iqiyihao.iqiyi.com/iqiyihao/entity/get_videos.action?agenttype=118&agentversion=10.7.5&authcookie=&dfp=%s&fuid=%s&m_device_id=cv2irlndqb0opl8fgsydst7q&page=%d&sign=%s&size=%s&timestamp=%d`
+	// episodeInfo 获取所有视频详情
+	videoEpisodeInfo = `https://iqiyihao.iqiyi.com/iqiyihao/episode_info.action?agenttype=118&agentversion=10.7.5&authcookie=&dfp=%s&m_device_id=cv2irlndqb0opl8fgsydst7q&qipuIds=%s&sign=%s&timestamp=%d`
+	//getSmallVideos 获取小视频id列表
+	getSmallVideos = `https://iqiyihao.iqiyi.com/iqiyihao/entity/get_small_videos.action?authcookie=&agenttype=119&agentversion=9.12.0&timestamp=%d&m_device_id=cv2irlndqb0opl8fgsydst7q&uid=%s&page=%d&size=%s&sign=%s`
+	// smallVideoEpisodeInfo 获取所有小视频详情
+	smallVideoEpisodeInfo = `https://iqiyihao.iqiyi.com/iqiyihao/episode_info.action?authcookie=&agenttype=119&agentversion=9.12.0&timestamp=%d&m_device_id=cv2irlndqb0opl8fgsydst7q&qipuIds=%s&sign=%s`
+)
+
+var (
+	size = "20"
+	//dfp 请求携带参数之一   如果失效 网页重新找cookie进行替换
+	dfp         = "a17dd85b225feb497a8774f10823fa05300b6abd36e828d37a4ae009837d7b7176"
+	currentPage = 1
+	timeStamp   = time.Now().UnixMilli()
 )
 
 func getMacID() string {
@@ -92,7 +100,7 @@ func getVF(params string) string {
 
 func getVPS(tvid, vid, refer string) (*iqiyi, error) {
 	t := time.Now().Unix() * 1000
-	host := "http://cache.video.qiyi.com"
+	host := "https://cache.video.iqiyi.com"
 	params := fmt.Sprintf(
 		"/vps?tvid=%s&vid=%s&v=0&qypid=%s_12&src=01012001010000000000&t=%d&k_tag=1&k_uid=%s&rs=1",
 		tvid, vid, tvid, t, getMacID(),
@@ -122,7 +130,38 @@ func New(siteType SiteType) extractors.Extractor {
 }
 
 // Extract is the main function to extract the data.
-func (e *extractor) Extract(url string, _ extractors.Options) ([]*extractors.Data, error) {
+func (e *extractor) Extract(url string, option extractors.Options) ([]*extractors.Data, error) {
+	result := make([]*extractors.Data, 0)
+	streams := make(map[string]*extractors.Stream)
+
+	if option.Playlist {
+		videos, err := extractPlaylist(url, false)
+		if err != nil {
+			return nil, err
+		}
+		needDownloadItems := utils.NeedDownloadList(option.Items, option.ItemStart, option.ItemEnd, len(videos))
+
+		result = lo.Filter(videos, func(_ *extractors.Data, index int) bool {
+			return array.ItemInArray(index+1, needDownloadItems)
+		})
+
+		return result, nil
+	}
+
+	if option.ShortPlaylist {
+		videos, err := extractPlaylist(url, true)
+		if err != nil {
+			return nil, err
+		}
+		needDownloadItems := utils.NeedDownloadList(option.Items, option.ItemStart, option.ItemEnd, len(videos))
+
+		result = lo.Filter(videos, func(_ *extractors.Data, index int) bool {
+			return array.ItemInArray(index+1, needDownloadItems)
+		})
+
+		return result, nil
+	}
+
 	refer := iqiyiReferer
 	headers := make(map[string]string)
 	if e.siteType == SiteTypeIQ {
@@ -131,6 +170,7 @@ func (e *extractor) Extract(url string, _ extractors.Options) ([]*extractors.Dat
 		}
 		refer = iqReferer
 	}
+	headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0"
 	html, err := request.Get(url, refer, headers)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -203,7 +243,6 @@ func (e *extractor) Extract(url string, _ extractors.Options) ([]*extractors.Dat
 		return nil, errors.Errorf("can't play this video: %s", videoDatas.Msg)
 	}
 
-	streams := make(map[string]*extractors.Stream)
 	urlPrefix := videoDatas.Data.VP.Du
 	for _, video := range videoDatas.Data.VP.Tkl[0].Vs {
 		urls := make([]*extractors.Part, len(video.Fs))
@@ -246,4 +285,208 @@ func (e *extractor) Extract(url string, _ extractors.Options) ([]*extractors.Dat
 			URL:     url,
 		},
 	}, nil
+}
+
+// https://www.iqiyi.com/u/1412822955/videos
+func extractPlaylist(uri string, shortPlaylist bool) ([]*extractors.Data, error) {
+	uid := utils.MatchOneOf(uri, `/u/(\d+)/`)[1]
+
+	var vInfo *GetVideosInfo
+	var err error
+	if !shortPlaylist {
+		//获取视频的id列表
+		ids, err := getVidList(uid)
+		if err != nil {
+			return nil, err
+		}
+
+		//获取视频的详情
+		vInfo, err = getAllVideoInfo(uid, ids)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		//获取视频的id列表
+		ids, err := getSmallVidList(uid)
+		if err != nil {
+			return nil, err
+		}
+
+		//获取视频的详情
+		vInfo, err = getAllSmallVideoInfo(uid, ids)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	streams := make(map[string]*extractors.Stream)
+	defaultStream := extractors.Stream{
+		Ext: "mp4",
+	}
+
+	result := make([]*extractors.Data, 0)
+
+	for _, video := range vInfo.Data {
+		streams["default"] = &defaultStream
+		result = append(result, &extractors.Data{
+			Site:    "爱奇艺 iqiyi",
+			URL:     video.PageUrl,
+			Title:   video.Title,
+			Type:    extractors.DataTypeVideo,
+			Streams: streams,
+		})
+	}
+	return result, err
+}
+
+func getAllVideoInfo(uid, qipuIds string) (*GetVideosInfo, error) {
+	sign, err := getSign(uid, videoEpisodeInfo)
+	if err != nil {
+		return nil, err
+	}
+	requestUrl := fmt.Sprintf(videoEpisodeInfo, dfp, qipuIds, sign, timeStamp)
+	vinfoResp := new(GetVideosInfo)
+	if _, err := request.Client.R().SetHeaders(header).SetResult(vinfoResp).Get(requestUrl); err != nil {
+		return nil, err
+	}
+	return vinfoResp, nil
+}
+
+func getVidList(uid string) (string, error) {
+	sign, err := getSign(uid, getVideos)
+	if err != nil {
+		return "", err
+	}
+	requestUrl := fmt.Sprintf(getVideos, dfp, uid, currentPage, sign, size, timeStamp)
+	idsResp := new(GetVideosId)
+	if _, err := request.Client.R().SetHeaders(header).SetResult(idsResp).Get(requestUrl); err != nil {
+		return "", err
+	}
+	idList := idsResp.Data.Sort.Flows
+	//处理idList 拼接成字符串
+	var ids []string
+	for _, vid := range idList {
+		id := cast.ToString(vid.QipuId)
+		if id != "" {
+			ids = append(ids, cast.ToString(vid.QipuId))
+		}
+	}
+	return strings.Join(ids, ","), err
+}
+
+func getSign(uid, action string) (sign string, err error) {
+	var requestUrl string
+	requestUrl = action
+	requestUrl = "GET" + strings.TrimLeft(requestUrl, "https://")
+	requestUrl = strings.ReplaceAll(requestUrl, "&sign=%s", "")
+
+	switch action {
+
+	case getVideos:
+		requestUrl = fmt.Sprintf(requestUrl, dfp, uid, currentPage, size, timeStamp)
+		requestUrl, err = urlKeySort(requestUrl)
+		if err != nil {
+			return "", err
+		}
+		requestUrl = requestUrl + "NZrFGv72GYppTUxO"
+
+	case videoEpisodeInfo:
+		qipuIds, err := getVidList(uid)
+		if err != nil {
+			return "", err
+		}
+		requestUrl = fmt.Sprintf(requestUrl, dfp, qipuIds, timeStamp)
+		requestUrl, err = urlKeySort(requestUrl)
+		if err != nil {
+			return "", err
+		}
+		requestUrl = requestUrl + "NZrFGv72GYppTUxO"
+
+	case getSmallVideos:
+		requestUrl = fmt.Sprintf(requestUrl, timeStamp, uid, currentPage, size)
+		requestUrl, err = urlKeySort(requestUrl)
+		if err != nil {
+			return "", err
+		}
+		requestUrl = requestUrl + "QMK8e4agKNWEppKU"
+
+	case smallVideoEpisodeInfo:
+		qipuIds, err := getSmallVidList(uid)
+		if err != nil {
+			return "", err
+		}
+		requestUrl = fmt.Sprintf(requestUrl, timeStamp, qipuIds)
+		requestUrl, err = urlKeySort(requestUrl)
+		if err != nil {
+			return "", err
+		}
+		requestUrl = requestUrl + "QMK8e4agKNWEppKU"
+
+	default:
+		return "", errors.New("没有对应链接")
+	}
+
+	return utils.Md5(requestUrl), err
+}
+
+func getSmallVidList(uid string) (string, error) {
+	sign, err := getSign(uid, getSmallVideos)
+	if err != nil {
+		return "", err
+	}
+	requestUrl := fmt.Sprintf(getSmallVideos, timeStamp, uid, currentPage, size, sign)
+	vidsResp := new(SmallVideoResp)
+	if _, err := request.Client.R().SetHeaders(header).SetResult(vidsResp).Get(requestUrl); err != nil {
+		return "", err
+	}
+	vidList := make([]int64, 0)
+	vidList = vidsResp.Data.Tvids
+	//处理vidList 拼接成字符串
+	var ids string
+	for _, vid := range vidList {
+		ids = ids + cast.ToString(vid) + ","
+	}
+	ids = strings.TrimRight(ids, ",")
+	return ids, nil
+}
+
+func getAllSmallVideoInfo(uid, qipuIds string) (videoInfo *GetVideosInfo, err error) {
+	sign, err := getSign(uid, smallVideoEpisodeInfo)
+	if err != nil {
+		return nil, err
+	}
+	//对字符串进行转义
+	qipuIds = url.QueryEscape(qipuIds)
+	requestUrl := fmt.Sprintf(smallVideoEpisodeInfo, timeStamp, qipuIds, sign)
+	vinfoResp := new(GetVideosInfo)
+	if _, err := request.Client.R().SetHeaders(header).SetResult(vinfoResp).Get(requestUrl); err != nil {
+		return nil, err
+	}
+	return vinfoResp, nil
+}
+
+// 下面的小写方法提供给上面导出方法使用
+func urlKeySort(urlString string) (string, error) {
+	u, err := url.Parse(urlString)
+	if err != nil {
+		return "", errors.New("解析url出错")
+	}
+	//得到map
+	queryParams := u.Query()
+	//存key
+	keys := make([]string, 0, len(queryParams))
+	for key := range queryParams {
+		keys = append(keys, key)
+	}
+	//对key排序
+	sort.Strings(keys)
+	//重新组装params
+	params := ""
+	for _, key := range keys {
+		params = params + fmt.Sprintf("%s=%s", key, queryParams[key][0]) + "&"
+	}
+	params = strings.TrimRight(params, "&")
+	//返回url
+	urlString = u.Path + "?" + params
+	return urlString, err
 }

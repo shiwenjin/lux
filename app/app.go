@@ -74,6 +74,11 @@ func New() *cli.App {
 				Aliases: []string{"p"},
 				Usage:   "Download playlist",
 			},
+			&cli.BoolFlag{
+				Name:    "short-playlist",
+				Aliases: []string{"sp"},
+				Usage:   "Download short-playlist",
+			},
 			&cli.StringFlag{
 				Name:    "user-agent",
 				Aliases: []string{"u"},
@@ -269,6 +274,7 @@ func New() *cli.App {
 func download(c *cli.Context, videoURL string) error {
 	data, err := extractors.Extract(videoURL, extractors.Options{
 		Playlist:         c.Bool("playlist"),
+		ShortPlaylist:    c.Bool("short-playlist"),
 		Items:            c.String("items"),
 		ItemStart:        int(c.Uint("start")),
 		ItemEnd:          int(c.Uint("end")),

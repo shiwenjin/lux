@@ -9,8 +9,9 @@ import (
 
 func TestDownload(t *testing.T) {
 	tests := []struct {
-		name string
-		args test.Args
+		name     string
+		args     test.Args
+		playlist bool
 	}{
 		{
 			name: "test 1",
@@ -38,11 +39,20 @@ func TestDownload(t *testing.T) {
 				Quality: "1080p",
 				Size:    468324298,
 			},
+		}, {
+			name: "主页视频",
+			args: test.Args{
+				URL:     "https://www.ixigua.com/home/53959751401/?list_entrance=homepage&video_card_type=shortvideo",
+				Title:   "卡尔：59杀4200法强小法师，点塔只需一下，W技能瞬秒对方",
+				Quality: "1080p",
+				Size:    468324298,
+			},
+			playlist: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data, err := New().Extract(tt.args.URL, extractors.Options{})
+			data, err := New().Extract(tt.args.URL, extractors.Options{Playlist: tt.playlist})
 			test.CheckError(t, err)
 			test.Check(t, tt.args, data[0])
 		})

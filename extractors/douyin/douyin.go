@@ -36,6 +36,10 @@ func New() extractors.Extractor {
 
 // Extract is the main function to extract the data.
 func (e *extractor) Extract(url string, option extractors.Options) ([]*extractors.Data, error) {
+	if option.Playlist {
+		return extractPlaylist(url)
+	}
+
 	if strings.Contains(url, "v.douyin.com") {
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
@@ -155,6 +159,62 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 	}, nil
 }
 
+func extractPlaylist(uri string) ([]*extractors.Data, error) {
+	secUid := utils.MatchOneOf(uri, `/user/(\S+)`)
+	if len(secUid) == 0 {
+		return nil, errors.New("unable to get secUid")
+	}
+
+	cookie, err := createCookie()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	params := fmt.Sprintf("sec_user_id=%s&count=20&max_cursor=%d&aid=1128&version_name=23.5.0&device_platform=android&os_version=2333", secUid[1], 0)
+
+	api := "https://www.douyin.com/aweme/v1/web/aweme/post/?" + params
+
+	// parse api query params string
+	query, err := netURL.Parse(api)
+	if err != nil {
+		return nil, errors.WithStack(extractors.ErrURLQueryParamsParseFailed)
+	}
+	// define request headers and sign agent
+	headers := map[string]string{}
+	headers["Cookie"] = cookie
+	headers["Referer"] = "https://www.douyin.com/"
+	headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36"
+
+	// init JavaScripts runtime
+	vm := goja.New()
+	// load sign scripts
+	_, _ = vm.RunString(script)
+	// sign
+	sign, err := vm.RunString(fmt.Sprintf("sign('%s', '%s')", query.RawQuery, headers["User-Agent"]))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	api = fmt.Sprintf("%s&X-Bogus=%s", api, sign)
+
+	var result DouYinList
+	_, err = request.Client.R().SetHeader("Referer", uri).SetHeaders(headers).SetResult(&result).Get(api)
+	if err != nil {
+		return nil, err
+	}
+
+	data := make([]*extractors.Data, 0)
+
+	for _, s := range result.AwemeList {
+		data = append(data, &extractors.Data{
+			URL:   fmt.Sprintf("https://www.douyin.com/video/%s", s.AwemeID),
+			Site:  "抖音  douyin.com",
+			Title: s.Desc,
+			Type:  extractors.DataTypeVideo,
+		})
+	}
+	return data, nil
+}
+
 func createCookie() (string, error) {
 	v1, err := msToken(107)
 	if err != nil {
@@ -166,7 +226,7 @@ func createCookie() (string, error) {
 	}
 	v3 := "324fb4ea4a89c0c05827e18a1ed9cf9bf8a17f7705fcc793fec935b637867e2a5a9b8168c885554d029919117a18ba69"
 	v4 := "eyJiZC10aWNrZXQtZ3VhcmQtdmVyc2lvbiI6MiwiYmQtdGlja2V0LWd1YXJkLWNsaWVudC1jc3IiOiItLS0tLUJFR0lOIENFUlRJRklDQVRFIFJFUVVFU1QtLS0tLVxyXG5NSUlCRFRDQnRRSUJBREFuTVFzd0NRWURWUVFHRXdKRFRqRVlNQllHQTFVRUF3d1BZbVJmZEdsamEyVjBYMmQxXHJcbllYSmtNRmt3RXdZSEtvWkl6ajBDQVFZSUtvWkl6ajBEQVFjRFFnQUVKUDZzbjNLRlFBNUROSEcyK2F4bXAwNG5cclxud1hBSTZDU1IyZW1sVUE5QTZ4aGQzbVlPUlI4NVRLZ2tXd1FJSmp3Nyszdnc0Z2NNRG5iOTRoS3MvSjFJc3FBc1xyXG5NQ29HQ1NxR1NJYjNEUUVKRGpFZE1Cc3dHUVlEVlIwUkJCSXdFSUlPZDNkM0xtUnZkWGxwYmk1amIyMHdDZ1lJXHJcbktvWkl6ajBFQXdJRFJ3QXdSQUlnVmJkWTI0c0RYS0c0S2h3WlBmOHpxVDRBU0ROamNUb2FFRi9MQnd2QS8xSUNcclxuSURiVmZCUk1PQVB5cWJkcytld1QwSDZqdDg1czZZTVNVZEo5Z2dmOWlmeTBcclxuLS0tLS1FTkQgQ0VSVElGSUNBVEUgUkVRVUVTVC0tLS0tXHJcbiJ9"
-	cookie := fmt.Sprintf("msToken=%s;ttwid=%s;odin_tt=%s;bd_ticket_guard_client_data=%s;", v1, v2, v3, v4)
+	cookie := fmt.Sprintf("msToken=%s;ttwid=%s;odin_tt=%s;bd_ticket_guard_client_data=%s;sid_tt=119b1d5449875e8733ba21c0a6ca3013;", v1, v2, v3, v4)
 	return cookie, nil
 }
 

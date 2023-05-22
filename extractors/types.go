@@ -55,6 +55,8 @@ type Data struct {
 	Captions map[string]*CaptionPart `json:"caption"`
 	// Err is used to record whether an error occurred when extracting the list data
 	Err error `json:"err"`
+	// Other is used to record other related video data
+	Series []*Data `json:"series"`
 }
 
 // FillUpStreamsData fills up some data automatically.
@@ -102,6 +104,8 @@ func EmptyData(url string, err error) *Data {
 type Options struct {
 	// Playlist indicates if we need to extract the whole playlist rather than the single video.
 	Playlist bool
+	// ShortPlaylist 爱优腾也存在短视频，对于爱优腾来说，除非显示声明，否则默认解析长视频
+	ShortPlaylist bool
 	// Items defines wanted items from a playlist. Separated by commas like: 1,5,6,8-10.
 	Items string
 	// ItemStart defines the starting item of a playlist.

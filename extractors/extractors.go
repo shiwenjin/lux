@@ -1,6 +1,7 @@
 package extractors
 
 import (
+	"mvdan.cc/xurls/v2"
 	"net/url"
 	"strings"
 	"sync"
@@ -20,8 +21,11 @@ func Register(domain string, e Extractor) {
 	lock.Unlock()
 }
 
+var rxRelaxed = xurls.Relaxed()
+
 // Extract is the main function to extract the data.
 func Extract(u string, option Options) ([]*Data, error) {
+	u = rxRelaxed.FindString(u)
 	u = strings.TrimSpace(u)
 	var domain string
 

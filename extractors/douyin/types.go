@@ -497,3 +497,158 @@ type douyinData struct {
 		Logid string `json:"logid"`
 	} `json:"extra"`
 }
+
+type DouYinList struct {
+	Extra struct {
+		Now   int64  `json:"now"`
+		Logid string `json:"logid"`
+	} `json:"extra"`
+	StatusCode int `json:"status_code"`
+	AwemeList  []struct {
+		LabelTopText interface{}   `json:"label_top_text"`
+		Promotions   interface{}   `json:"promotions"`
+		Images       interface{}   `json:"images"`
+		ChaList      interface{}   `json:"cha_list"`
+		AwemeType    int           `json:"aweme_type"`
+		Geofencing   interface{}   `json:"geofencing"`
+		AwemeID      string        `json:"aweme_id"`
+		ImageInfos   interface{}   `json:"image_infos"`
+		TextExtra    []interface{} `json:"text_extra"`
+		LongVideo    interface{}   `json:"long_video"`
+		Desc         string        `json:"desc"`
+		CreateTime   int64         `json:"create_time"`
+		Statistics   struct {
+			DiggCount    int64  `json:"digg_count"`
+			PlayCount    int64  `json:"play_count"`
+			ShareCount   int64  `json:"share_count"`
+			ForwardCount int64  `json:"forward_count"`
+			AwemeID      string `json:"aweme_id"`
+			CommentCount int64  `json:"comment_count"`
+		} `json:"statistics"`
+		VideoLabels interface{} `json:"video_labels"`
+		CommentList interface{} `json:"comment_list"`
+		VideoText   interface{} `json:"video_text"`
+		Author      struct {
+			FollowersDetail     interface{}   `json:"followers_detail"`
+			PlatformSyncInfo    interface{}   `json:"platform_sync_info"`
+			WithFusionShopEntry bool          `json:"with_fusion_shop_entry"`
+			Nickname            string        `json:"nickname"`
+			FavoritingCount     int           `json:"favoriting_count"`
+			WithCommerceEntry   bool          `json:"with_commerce_entry"`
+			Region              string        `json:"region"`
+			IsGovMediaVip       bool          `json:"is_gov_media_vip"`
+			Rate                int           `json:"rate"`
+			TypeLabel           []interface{} `json:"type_label"`
+			AvatarLarger        struct {
+				URI     string   `json:"uri"`
+				URLList []string `json:"url_list"`
+			} `json:"avatar_larger"`
+			FollowingCount         int    `json:"following_count"`
+			StoryOpen              bool   `json:"story_open"`
+			Signature              string `json:"signature"`
+			FollowerCount          int    `json:"follower_count"`
+			Secret                 int    `json:"secret"`
+			HasOrders              bool   `json:"has_orders"`
+			UID                    string `json:"uid"`
+			ShortID                string `json:"short_id"`
+			EnterpriseVerifyReason string `json:"enterprise_verify_reason"`
+			AvatarThumb            struct {
+				URI     string   `json:"uri"`
+				URLList []string `json:"url_list"`
+			} `json:"avatar_thumb"`
+			AwemeCount   int    `json:"aweme_count"`
+			SecUID       string `json:"sec_uid"`
+			UserCanceled bool   `json:"user_canceled"`
+			AvatarMedium struct {
+				URI     string   `json:"uri"`
+				URLList []string `json:"url_list"`
+			} `json:"avatar_medium"`
+			VerificationType int         `json:"verification_type"`
+			Geofencing       interface{} `json:"geofencing"`
+			VideoIcon        struct {
+				URI     string        `json:"uri"`
+				URLList []interface{} `json:"url_list"`
+			} `json:"video_icon"`
+			PolicyVersion interface{} `json:"policy_version"`
+			FollowStatus  int         `json:"follow_status"`
+			UniqueID      string      `json:"unique_id"`
+			CustomVerify  string      `json:"custom_verify"`
+			IsAdFake      bool        `json:"is_ad_fake"`
+			WithShopEntry bool        `json:"with_shop_entry"`
+		} `json:"author"`
+		Video struct {
+			PlayAddrLowbr struct {
+				URI     string   `json:"uri"`
+				URLList []string `json:"url_list"`
+			} `json:"play_addr_lowbr"`
+			Duration     int64  `json:"duration"`
+			Vid          string `json:"vid"`
+			Height       int    `json:"height"`
+			Width        int    `json:"width"`
+			DynamicCover struct {
+				URLList []string `json:"url_list"`
+				URI     string   `json:"uri"`
+			} `json:"dynamic_cover"`
+			Ratio        string `json:"ratio"`
+			DownloadAddr struct {
+				URI     string   `json:"uri"`
+				URLList []string `json:"url_list"`
+			} `json:"download_addr"`
+			PlayAddr struct {
+				URI     string   `json:"uri"`
+				URLList []string `json:"url_list"`
+			} `json:"play_addr"`
+			Cover struct {
+				URI     string   `json:"uri"`
+				URLList []string `json:"url_list"`
+			} `json:"cover"`
+			OriginCover struct {
+				URLList []string `json:"url_list"`
+				URI     string   `json:"uri"`
+			} `json:"origin_cover"`
+			HasWatermark bool        `json:"has_watermark"`
+			BitRate      interface{} `json:"bit_rate"`
+			Publishtime  int64
+		} `json:"video"`
+		MixInfo struct {
+			CoverUrl struct {
+				Height  int      `json:"height"`
+				Uri     string   `json:"uri"`
+				UrlList []string `json:"url_list"`
+				Width   int      `json:"width"`
+			} `json:"cover_url"`
+			CreateTime  int         `json:"create_time"`
+			Desc        string      `json:"desc"`
+			Extra       string      `json:"extra"`
+			Ids         interface{} `json:"ids"`
+			IsSerialMix int         `json:"is_serial_mix"`
+			MixId       string      `json:"mix_id"`
+			MixName     string      `json:"mix_name"`
+			MixPicType  int         `json:"mix_pic_type"`
+			MixType     int         `json:"mix_type"`
+			ShareInfo   struct {
+				ShareDesc        string `json:"share_desc"`
+				ShareDescInfo    string `json:"share_desc_info"`
+				ShareTitle       string `json:"share_title"`
+				ShareTitleMyself string `json:"share_title_myself"`
+				ShareTitleOther  string `json:"share_title_other"`
+				ShareUrl         string `json:"share_url"`
+				ShareWeiboDesc   string `json:"share_weibo_desc"`
+			} `json:"share_info"`
+			Statis struct {
+				CollectVv        int `json:"collect_vv"`
+				CurrentEpisode   int `json:"current_episode"`
+				PlayVv           int `json:"play_vv"`
+				UpdatedToEpisode int `json:"updated_to_episode"`
+			} `json:"statis"`
+			Status struct {
+				IsCollected int `json:"is_collected"`
+				Status      int `json:"status"`
+			} `json:"status"`
+			UpdateTime  int    `json:"update_time"`
+			WatchedItem string `json:"watched_item"`
+		} `json:"mix_info"`
+	} `json:"aweme_list"`
+	MaxCursor int64 `json:"max_cursor"`
+	MinCursor int64 `json:"min_cursor"`
+}
