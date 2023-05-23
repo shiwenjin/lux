@@ -1,6 +1,7 @@
 package mgtv
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/iawia002/lux/extractors"
@@ -52,7 +53,9 @@ func TestDownload(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			New().Extract(tt.args.URL, extractors.Options{Playlist: tt.playlist})
+			_, err := New().Extract(tt.args.URL, extractors.Options{Playlist: tt.playlist})
+			assert.NoError(t, err)
 		})
+
 	}
 }

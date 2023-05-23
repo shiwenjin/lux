@@ -31,6 +31,7 @@ type mgtvVideoStream struct {
 type mgtvVideoInfo struct {
 	Title string `json:"title"`
 	Desc  string `json:"desc"`
+	Thumb string `json:"thumb"`
 }
 
 type mgtvVideoData struct {
@@ -61,19 +62,21 @@ type mgtvPm2Data struct {
 	} `json:"data"`
 }
 
-func mgtvM3u8(url string) ([]mgtvURLInfo, int64, error) {
+func mgtvM3u8(url string, refer string, heads map[string]string) ([]mgtvURLInfo, int64, error) {
 	var data []mgtvURLInfo
 	var temp mgtvURLInfo
 	var size, totalSize int64
-	urls, err := utils.M3u8URLs(url)
+
+	html, err := request.Get(url, refer, heads)
+	if err != nil {
+		return nil, 0, errors.WithStack(err)
+	}
+
+	urls, err := utils.M3u8URLsWithDoc(url, html)
 	if err != nil {
 		return nil, 0, err
 	}
-	m3u8String, err := request.Get(url, url, nil)
-	if err != nil {
-		return nil, 0, err
-	}
-	sizes := utils.MatchAll(m3u8String, `#EXT-MGTV-File-SIZE:(\d+)`)
+	sizes := utils.MatchAll(html, `#EXT-MGTV-File-SIZE:(\d+)`)
 	// sizes: [[#EXT-MGTV-File-SIZE:1893724, 1893724]]
 	for index, u := range urls {
 		size, err = strconv.ParseInt(sizes[index][1], 10, 64)
@@ -159,7 +162,7 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 
 	dataString, err := request.Get(
 		fmt.Sprintf(
-			"https://pcweb.api.mgtv.com/player/getSource?video_id=%s&tk2=%s&pm2=%s",
+			"https://pcweb.api.mgtv.com/player/getSource?video_id=%s&tk2=%s&pm2=%s&type=pch5&auth_mode=1&supportMse=1",
 			vid[1], encodeTk2(clit), pm2.Data.Atc.Pm2,
 		),
 		url,
@@ -193,7 +196,7 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 			return nil, errors.WithStack(err)
 		}
 
-		m3u8URLs, totalSize, err := mgtvM3u8(addr.Info)
+		m3u8URLs, totalSize, err := mgtvM3u8(addr.Info, url, headers)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -219,6 +222,7 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 			Type:    extractors.DataTypeVideo,
 			Streams: streams,
 			URL:     url,
+			Cover:   pm2.Data.Info.Thumb,
 		},
 	}, nil
 }
@@ -243,6 +247,7 @@ func extractPlaylist(uri string) ([]*extractors.Data, error) {
 				Title:   value.Get("t3").String(),
 				Type:    extractors.DataTypeVideo,
 				Streams: make(map[string]*extractors.Stream),
+				Cover:   strings.ReplaceAll(value.Get("img").String(), "_220x125.jpg", ""),
 			})
 			return true
 		})

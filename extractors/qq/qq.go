@@ -340,11 +340,15 @@ func (e *extractor) Extract(uri string, option extractors.Options) ([]*extractor
 		seriesJson := gjson.Parse(moreJson).Get("episodeMain.listData.0.list.0")
 		seriesJson.ForEach(func(key, value gjson.Result) bool {
 			addr, _ := url.JoinPath(`https://v.qq.com/x/cover`, value.Get("cid").String(), value.Get("vid").String())
+
+			pic := lo.If(value.Get("pic").String() != "", value.Get("pic").String()).Else(value.Get("picVertial").String())
+
 			xx = append(xx, &extractors.Data{
 				Title: value.Get("playTitle").String(),
 				URL:   addr,
 				Site:  "腾讯视频 v.qq.com",
 				Type:  extractors.DataTypeVideo,
+				Cover: pic,
 			})
 			return true
 		})
@@ -365,6 +369,8 @@ func (e *extractor) Extract(uri string, option extractors.Options) ([]*extractor
 		return nil, errors.WithStack(err)
 	}
 
+	pic := gjson.Parse(moreJson).Get("epiosode.currentVideoInfo.pic").String()
+
 	return []*extractors.Data{
 		{
 			Site:    "腾讯视频 v.qq.com",
@@ -373,6 +379,7 @@ func (e *extractor) Extract(uri string, option extractors.Options) ([]*extractor
 			Streams: streams,
 			URL:     uri,
 			Series:  xx,
+			Cover:   pic,
 		},
 	}, nil
 }
@@ -398,6 +405,7 @@ func extractPlaylist(uri string) ([]*extractors.Data, error) {
 			URL:   addr,
 			Site:  "腾讯视频 v.qq.com",
 			Type:  extractors.DataTypeVideo,
+			Cover: value.Get("image").String(),
 		})
 		return true
 	})

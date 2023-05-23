@@ -133,6 +133,7 @@ func (e *extractor) youtubeDownload(url string, video *youtube.Video) *extractor
 		Type:    "video",
 		Streams: streams,
 		URL:     url,
+		Cover:   video.Thumbnails[len(video.Thumbnails)-1].URL,
 	}
 }
 

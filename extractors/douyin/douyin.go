@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/samber/lo"
 	"net/http"
 	netURL "net/url"
 	"regexp"
@@ -155,6 +156,7 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 			Type:    douyinType,
 			Streams: streams,
 			URL:     url,
+			Cover:   lo.If(len(douyin.AwemeDetail.Video.Cover.URLList) > 0, douyin.AwemeDetail.Video.Cover.URLList[0]).Else(""),
 		},
 	}, nil
 }
@@ -210,6 +212,7 @@ func extractPlaylist(uri string) ([]*extractors.Data, error) {
 			Site:  "抖音  douyin.com",
 			Title: s.Desc,
 			Type:  extractors.DataTypeVideo,
+			Cover: lo.If(len(s.Video.Cover.URLList) > 0, s.Video.Cover.URLList[0]).Else(""),
 		})
 	}
 	return data, nil

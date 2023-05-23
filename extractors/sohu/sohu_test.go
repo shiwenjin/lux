@@ -14,20 +14,20 @@ func TestReddit(t *testing.T) {
 		args     test.Args
 		playlist bool
 	}{
-		//{
-		//	name: "返回的MP4",
-		//	args: test.Args{
-		//		URL:   "https://my.tv.sohu.com/us/338449973/438721391.shtml",
-		//		Title: "王二妮，金婷婷同唱《白毛女》选段，精彩的演唱，永不忘的经典。",
-		//	},
-		//},
-		//{
-		//	name: "返回的MP4",
-		//	args: test.Args{
-		//		URL:   "https://tv.sohu.com/v/MjAxNzExMDkvbjYwMDI0NzEwMi5zaHRtbA==.html",
-		//		Title: "拜见宫主大人第一季第1集",
-		//	},
-		//},
+		{
+			name: "返回的MP4",
+			args: test.Args{
+				URL:   "https://my.tv.sohu.com/us/338449973/438721391.shtml",
+				Title: "王二妮，金婷婷同唱《白毛女》选段，精彩的演唱，永不忘的经典。",
+			},
+		},
+		{
+			name: "返回的MP4",
+			args: test.Args{
+				URL:   "https://tv.sohu.com/v/MjAxNzExMDkvbjYwMDI0NzEwMi5zaHRtbA==.html",
+				Title: "拜见宫主大人第一季第1集",
+			},
+		},
 		{
 			name: "返回的列表",
 			args: test.Args{

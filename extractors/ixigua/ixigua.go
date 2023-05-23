@@ -39,9 +39,9 @@ func New() extractors.Extractor {
 }
 
 // Extract is the main function to extract the data.
-func (e *extractor) Extract(url string, option extractors.Options) ([]*extractors.Data, error) {
+func (e *extractor) Extract(uri string, option extractors.Options) ([]*extractors.Data, error) {
 	if option.Playlist {
-		return extractPlaylist(url)
+		return extractPlaylist(uri)
 	}
 
 	//headers := map[string]string{
@@ -57,12 +57,12 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 	// 格式三会跳转到 https://www.toutiao.com/a7053389963487871502
 
 	var finalURL string
-	if strings.HasPrefix(url, "https://www.ixigua.com/") {
-		finalURL = url
+	if strings.HasPrefix(uri, "https://www.ixigua.com/") {
+		finalURL = uri
 	}
 
-	if strings.HasPrefix(url, "https://v.ixigua.com/") || strings.HasPrefix(url, "https://m.toutiao.com/") {
-		resp, err := http.Get(url)
+	if strings.HasPrefix(uri, "https://v.ixigua.com/") || strings.HasPrefix(uri, "https://m.toutiao.com/") {
+		resp, err := http.Get(uri)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -124,13 +124,15 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 		}
 	}
 
+	cover := "https:" + video.Data.InitialVideo.CoverUrl
 	return []*extractors.Data{
 		{
 			Site:    "西瓜视频 ixigua.com",
 			Title:   video.Data.InitialVideo.Title,
 			Type:    extractors.DataTypeVideo,
 			Streams: streams,
-			URL:     url,
+			URL:     uri,
+			Cover:   cover,
 		},
 	}, nil
 }
@@ -154,6 +156,7 @@ func extractPlaylist(u string) ([]*extractors.Data, error) {
 			Site:  "西瓜视频 ixigua.com",
 			Title: s.Title,
 			Type:  extractors.DataTypeVideo,
+			Cover: s.VideoDetailInfo.DetailVideoLargeImage.Url,
 		})
 	}
 

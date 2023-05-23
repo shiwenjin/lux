@@ -48,6 +48,7 @@ type Data struct {
 	URL   string   `json:"url"`
 	Site  string   `json:"site"`
 	Title string   `json:"title"`
+	Cover string   `json:"cover"`
 	Type  DataType `json:"type"`
 	// each stream has it's own Parts and Quality
 	Streams map[string]*Stream `json:"streams"`

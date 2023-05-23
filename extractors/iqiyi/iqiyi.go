@@ -214,6 +214,9 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	cover := queryCoverFromDoc(html)
+
 	var title string
 	if e.siteType == SiteTypeIqiyi {
 		title = strings.TrimSpace(doc.Find("h1>a").First().Text())
@@ -283,8 +286,33 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 			Type:    extractors.DataTypeVideo,
 			Streams: streams,
 			URL:     url,
+			Cover:   cover,
 		},
 	}, nil
+}
+
+func queryCoverFromDoc(doc string) string {
+	var cover string
+	var err error
+	coverArr := utils.MatchOneOf(doc, `<meta[^>]+property="og:image"\s+content="([^"]+)`, `<meta[^>]+property="og:image"\s+content="([^"]+)`)
+	if len(coverArr) > 0 {
+		cover, _ = url.JoinPath("https://", coverArr[1])
+		cover = strings.ReplaceAll(cover, ".jpg", "_1920_1080.jpg")
+
+		_, err = request.Headers(cover, "")
+		if err != nil {
+			cover = strings.ReplaceAll(cover, "_1920_1080.jpg", "_1280_720.jpg")
+			_, err = request.Headers(cover, "")
+			if err != nil {
+				cover = strings.ReplaceAll(cover, "_1280_720.jpg", "_480_270.jpg")
+				_, err = request.Headers(cover, "")
+				if err != nil {
+					cover = utils.MatchOneOf(doc, `<meta\s+content="([^"]+)"\s+property="og:image">`)[1]
+				}
+			}
+		}
+	}
+	return cover
 }
 
 // https://www.iqiyi.com/u/1412822955/videos
@@ -334,6 +362,7 @@ func extractPlaylist(uri string, shortPlaylist bool) ([]*extractors.Data, error)
 			Title:   video.Title,
 			Type:    extractors.DataTypeVideo,
 			Streams: streams,
+			Cover:   video.VerticalThumbnail,
 		})
 	}
 	return result, err

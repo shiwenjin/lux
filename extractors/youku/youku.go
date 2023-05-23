@@ -49,6 +49,7 @@ type stream struct {
 
 type youkuVideo struct {
 	Title string `json:"title"`
+	Logo  string `json:"logo"`
 }
 
 type youkuShow struct {
@@ -154,7 +155,7 @@ func youkuUps(vid string, option extractors.Options) (*youkuData, error) {
 	}
 
 	// data must be emptied before reassignment, otherwise it will contain the previous value(the 'error' data)
-	_, err := request.Client.R().ForceContentType("application/json").SetHeader("Referer", `https://ups.youku.com/ups/get.json`).
+	body, err := request.Client.R().ForceContentType("application/json").SetHeader("Referer", `https://ups.youku.com/ups/get.json`).
 		SetHeader("Cookie", "__ysuid="+getYSUID()).
 		SetHeader("xreferrer", "http://www.youku.com").
 		SetQueryParams(map[string]string{
@@ -170,7 +171,7 @@ func youkuUps(vid string, option extractors.Options) (*youkuData, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	if data.Data.Error == (errorData{}) {
+	if body.StatusCode() == 200 && data.Data.Error == (errorData{}) {
 		return &data, nil
 	}
 	return &data, nil
@@ -317,6 +318,7 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 			Streams: streams,
 			URL:     url,
 			Series:  other,
+			Cover:   youkuData.Data.Video.Logo,
 		},
 	}, nil
 }
@@ -351,6 +353,7 @@ func getMoreVideo(uri string, option extractors.Options) ([]*extractors.Data, er
 			URL:   fmt.Sprintf(`https://v.youku.com/v_show/id_%s.html`, value.Get("data.action.value")),
 			Site:  "优酷 youku.com",
 			Type:  extractors.DataTypeVideo,
+			Cover: value.Get("data.img").String(),
 		})
 		return true
 	})
@@ -384,6 +387,7 @@ func extractPlaylist(homeUrl string) ([]*extractors.Data, error) {
 				Title: value.Get("title").String(),
 				Type:  extractors.DataTypeVideo,
 				URL:   videoUrl,
+				Cover: value.Get("imgUrl").String(),
 			})
 			return true
 		})

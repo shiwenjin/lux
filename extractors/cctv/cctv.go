@@ -32,14 +32,13 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 	}
 
 	vid, err := getVid(body.String())
-	fmt.Println(vid)
 
 	body, err = request.Client.SetTimeout(60 * time.Second).R().Get(fmt.Sprintf(`https://vdn.apps.cntv.cn/api/getHttpVideoInfo.do?pid=%s`, vid))
 	if err != nil {
 		return nil, err
 	}
 
-	var title string
+	var title, cover string
 	jsonObj := gjson.ParseBytes(body.Body())
 	title = jsonObj.Get("title").String()
 
@@ -57,6 +56,8 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 					URL:  p.Get("url").String(),
 					Size: size,
 					Ext:  "mp4"})
+
+				cover = p.Get("image").String()
 			}
 			streams[hd] = &extractors.Stream{
 				Quality: hd,
@@ -74,6 +75,7 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 			Type:    extractors.DataTypeVideo,
 			Streams: streams,
 			URL:     urlAddr,
+			Cover:   cover,
 		},
 	}, nil
 }

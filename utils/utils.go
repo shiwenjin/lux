@@ -193,17 +193,12 @@ func Md5(text string) string {
 	return fmt.Sprintf("%x", sign.Sum(nil))
 }
 
-// M3u8URLs get all urls from m3u8 url
-func M3u8URLs(uri string) ([]string, error) {
+func M3u8URLsWithDoc(uri, doc string) ([]string, error) {
 	if len(uri) == 0 {
 		return nil, errors.New("url is null")
 	}
 
-	html, err := request.Get(uri, "", nil)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	lines := strings.Split(html, "\n")
+	lines := strings.Split(doc, "\n")
 	var urls []string
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -224,6 +219,19 @@ func M3u8URLs(uri string) ([]string, error) {
 		}
 	}
 	return urls, nil
+}
+
+// M3u8URLs get all urls from m3u8 url
+func M3u8URLs(uri string) ([]string, error) {
+	if len(uri) == 0 {
+		return nil, errors.New("url is null")
+	}
+
+	html, err := request.Get(uri, "", nil)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return M3u8URLsWithDoc(uri, html)
 }
 
 // Reverse Reverse a string

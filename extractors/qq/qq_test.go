@@ -34,7 +34,7 @@ func TestDownload(t *testing.T) {
 			name: "短视频",
 			args: test.Args{
 				URL:     "https://v.qq.com/x/page/t0046y8r0bs.html",
-				Title:   "《卡路里》出圈！妖娆男子教学广场舞版，大妈表情亮了！",
+				Title:   "跟郭采洁逛AMI影展 分享“家”的意义",
 				Size:    14112979,
 				Quality: "超清;(720P)",
 			},

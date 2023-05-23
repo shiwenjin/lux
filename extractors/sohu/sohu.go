@@ -65,13 +65,14 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 				Title:   video.Title,
 				Type:    extractors.DataTypeVideo,
 				Streams: streams,
+				Cover:   video.Cover,
 			})
 		}
 
 		return result, nil
 	}
 
-	var title string
+	var title, cover string
 	if htmlMeta.Aid != "" && htmlMeta.Vid != "" {
 		//_, err = checkPermission(htmlMeta.Aid, htmlMeta.Vid, htmlMeta.TVid)
 		//if err != nil {
@@ -86,6 +87,7 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 		if len(videoMeta.Data.Su) != 0 {
 			urls := make([]*extractors.Part, 0, len(videoMeta.Data.Su))
 			title = videoMeta.Data.TvName
+			cover = videoMeta.Data.CoverImg
 
 			//> 1，走m3u8合并
 			for i, su := range videoMeta.Data.Su {
@@ -129,6 +131,7 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 				return nil, err
 			}
 			title = result.Title
+			cover = result.CoverImg
 			urlData := &extractors.Part{
 				URL:  result.Mp4PlayUrl,
 				Size: size,
@@ -148,6 +151,7 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 			Type:    extractors.DataTypeVideo,
 			Streams: streams,
 			URL:     urlAddr,
+			Cover:   cover,
 		},
 	}, nil
 }
@@ -168,6 +172,7 @@ func extractPlaylist(aid string) ([]*Video, error) {
 		videos = append(videos, &Video{
 			Title: value.Get("name").String(),
 			URL:   value.Get("pageUrl").String(),
+			Cover: value.Get("largePicUrl").String(),
 		})
 		return true
 	})
@@ -274,6 +279,7 @@ func getHTMLMeta(uri string) (*tvSohuComHtmlMeta, error) {
 type Video struct {
 	Title string
 	URL   string
+	Cover string
 }
 
 type tvSohuComHtmlMeta struct {

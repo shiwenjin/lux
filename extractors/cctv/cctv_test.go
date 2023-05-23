@@ -32,7 +32,7 @@ func TestReddit(t *testing.T) {
 			name: "返回的列表",
 			args: test.Args{
 				URL:   "https://tv.cctv.com/2021/01/15/VIDE9wBaPD0WracfCxc6ORcM210115.shtml",
-				Title: "拜见宫主大人第一季第1集",
+				Title: "远方的家》 20210115 大运河（61） 运河边的津味儿生活",
 			},
 			playlist: true,
 		},
