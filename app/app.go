@@ -331,6 +331,13 @@ func download(c *cli.Context, videoURL string) error {
 		if err = defaultDownloader.Download(item); err != nil {
 			errors = append(errors, err)
 		}
+
+		if item.Cover != "" {
+			_ = c.Set("output-name", item.Title)
+			if err = download(c, item.Cover); err != nil {
+				errors = append(errors, err)
+			}
+		}
 	}
 	if len(errors) != 0 {
 		return errors[0]
