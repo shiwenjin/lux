@@ -132,9 +132,16 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 			}
 			title = result.Title
 			cover = result.CoverImg
+
+			var mp4PlayUrlVo Mp4PlayUrlVo
+			_, err = request.Client.R().SetResult(&mp4PlayUrlVo).Get(result.Mp4PlayUrl)
+			if err != nil {
+				return nil, err
+			}
+
 			urlData := &extractors.Part{
-				URL:  result.Mp4PlayUrl,
-				Size: size,
+				URL:  mp4PlayUrlVo.Servers[0].Url,
+				Size: result.TotalBytes,
 				Ext:  "mp4",
 			}
 			streams["default"] = &extractors.Stream{
@@ -195,6 +202,7 @@ func getVideoNew(vid string) (result *VideoNewVo, err error) {
 		Duration:   data.Get("totalDuration").Int(),
 		CoverImg:   data.Get("coverImg").String(),
 		Mp4PlayUrl: data.Get("mp4PlayUrl|0").String(),
+		TotalBytes: data.Get("totalBytes").Int(),
 	}
 	return
 }
@@ -329,4 +337,13 @@ type VideoNewVo struct {
 	Duration   int64
 	CoverImg   string
 	Mp4PlayUrl string
+	TotalBytes int64
+}
+
+type Mp4PlayUrlVo struct {
+	Servers []struct {
+		Nid   int    `json:"nid"`
+		Isp2P int    `json:"isp2p"`
+		Url   string `json:"url"`
+	} `json:"servers"`
 }

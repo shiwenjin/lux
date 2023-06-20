@@ -53,7 +53,11 @@ func Extract(u string, option Options) ([]*Data, error) {
 			domain = utils.Domain(u.Host)
 		}
 	}
-	extractor := extractorMap[domain]
+	extractor, ok := extractorMap[domain]
+	if !ok {
+		domain = GetTopLevelDomain(u)
+	}
+	extractor = extractorMap[domain]
 	if extractor == nil {
 		extractor = extractorMap[""]
 	}
@@ -65,4 +69,41 @@ func Extract(u string, option Options) ([]*Data, error) {
 		v.FillUpStreamsData()
 	}
 	return videos, nil
+}
+
+func GetTopLevelDomain(u string) string {
+	url, err := url.Parse(u)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	host := url.Hostname()
+	parts := strings.Split(host, ".")
+
+	// Special case for IP addresses
+	if len(parts) == 1 {
+		return parts[0]
+	}
+
+	// Check whether the last two elements are top-level and second-level domain names
+	sld := parts[len(parts)-2]
+
+	// Check whether the second-level domain is a common suffix (e.g. co, com, gov, edu, etc.)
+	// If so, return the third-level domain as the top-level domain
+	commonSuffixes := []string{"com", "org", "net", "int", "edu", "gov", "mil", "arpa"}
+	if contains(commonSuffixes, sld) {
+		return parts[len(parts)-3]
+	}
+
+	// Otherwise, the second-level domain is the top-level domain
+	return sld
+}
+
+func contains(s []string, e string) bool {
+	for _, v := range s {
+		if v == e {
+			return true
+		}
+	}
+	return false
 }

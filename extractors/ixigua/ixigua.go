@@ -71,7 +71,13 @@ func (e *extractor) Extract(uri string, option extractors.Options) ([]*extractor
 		finalURL = resp.Request.URL.String()
 	}
 
-	finalURL = strings.ReplaceAll(finalURL, "https://www.toutiao.com/a", "https://www.ixigua.com/")
+	if strings.Contains(finalURL, "https://www.toutiao.com/a") {
+		finalURL = strings.ReplaceAll(finalURL, "https://www.toutiao.com/a", "https://www.ixigua.com/")
+	}
+
+	if strings.Contains(finalURL, "https://www.toutiao.com/video") {
+		finalURL = strings.ReplaceAll(finalURL, "https://www.toutiao.com/video", "https://www.ixigua.com")
+	}
 
 	r := regexp.MustCompile(`(ixigua.com/)(\w+)?`)
 	id := r.FindSubmatch([]byte(finalURL))[2]
