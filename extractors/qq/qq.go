@@ -108,7 +108,7 @@ func getVinfo(vid, defn, refer string) (qqVideoInfo, error) {
 }
 
 func getVideoApiKey(vid, videoUrl, seriesId, subtitleFormat, videoFormat, videoQuality string) (qqVideoInfo, error) {
-	guid := getGuid()
+	guid := getGuid(16)
 	cKey := getCKey(vid, videoUrl, guid)
 	query := map[string]string{
 		"vid":           vid,
@@ -133,7 +133,7 @@ func getVideoApiKey(vid, videoUrl, seriesId, subtitleFormat, videoFormat, videoQ
 		"appVer":        "3.5.57",
 		"platform":      "10901",
 		"guid":          guid,
-		"flowid":        getGuid(),
+		"flowid":        getGuid(32),
 	}
 
 	body, err := request.Client.R().SetQueryParams(query).Get(`https://h5vv6.video.qq.com/getvinfo`)
@@ -186,10 +186,10 @@ func getCKey(videoId, url, guid string) string {
 	return strings.ToUpper(fmt.Sprintf("%x", ciphertext))
 }
 
-func getGuid() string {
+func getGuid(k int) string {
 	rand.Seed(time.Now().UnixNano())
 	var letters = []rune("0123456789abcdefghijklmnopqrstuvwxyz")
-	b := make([]rune, 32)
+	b := make([]rune, k)
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]
 	}

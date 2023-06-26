@@ -71,12 +71,12 @@ func (e *extractor) Extract(uri string, option extractors.Options) ([]*extractor
 		finalURL = resp.Request.URL.String()
 	}
 
-	if strings.Contains(finalURL, "https://www.toutiao.com/a") {
-		finalURL = strings.ReplaceAll(finalURL, "https://www.toutiao.com/a", "https://www.ixigua.com/")
+	if strings.Contains(uri, "https://www.toutiao.com/a") {
+		finalURL = strings.ReplaceAll(uri, "https://www.toutiao.com/a", "https://www.ixigua.com/")
 	}
 
-	if strings.Contains(finalURL, "https://www.toutiao.com/video") {
-		finalURL = strings.ReplaceAll(finalURL, "https://www.toutiao.com/video", "https://www.ixigua.com")
+	if strings.Contains(uri, "https://www.toutiao.com/video") {
+		finalURL = strings.ReplaceAll(uri, "https://www.toutiao.com/video", "https://www.ixigua.com")
 	}
 
 	r := regexp.MustCompile(`(ixigua.com/)(\w+)?`)
@@ -133,7 +133,7 @@ func (e *extractor) Extract(uri string, option extractors.Options) ([]*extractor
 	cover := "https:" + video.Data.InitialVideo.CoverUrl
 	return []*extractors.Data{
 		{
-			Site:    "西瓜视频 ixigua.com",
+			Site:    "西瓜/头条视频 ixigua.com/toutiao.com",
 			Title:   video.Data.InitialVideo.Title,
 			Type:    extractors.DataTypeVideo,
 			Streams: streams,

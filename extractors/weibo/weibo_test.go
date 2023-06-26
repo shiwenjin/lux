@@ -33,6 +33,13 @@ func TestDownload(t *testing.T) {
 				Title: "毒液插图Blender+Photoshop2.5小时工作流",
 				Size:  7520929,
 			},
+		}, {
+			name: "weibo.com/tv test",
+			args: test.Args{
+				URL:   "https://video.weibo.com/show?fid=1034:4916445562208285",
+				Title: "毒液插图Blender+Photoshop2.5小时工作流",
+				Size:  7520929,
+			},
 		},
 		{
 			name: "video.h5.weibo.cn test",

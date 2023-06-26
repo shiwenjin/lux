@@ -72,5 +72,5 @@ func TestName(t *testing.T) {
 }
 
 func TestM3u8(t *testing.T) {
-
+	t.Log(getGuid(32))
 }

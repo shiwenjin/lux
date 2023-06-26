@@ -33,13 +33,31 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 	result := make([]*extractors.Data, 0)
 	streams := make(map[string]*extractors.Stream)
 
-	htmlMeta, err := getHTMLMeta(urlAddr)
-	if err != nil {
-		return nil, err
+	if strings.Contains(urlAddr, "my.tv.sohu.com/us") {
+		headerResp, err := request.Client.R().Head(urlAddr)
+		if err != nil {
+			return nil, err
+		}
+		urlAddr = headerResp.RawResponse.Request.Response.Header.Get("Location")
 	}
 
+	var htmlMeta *tvSohuComHtmlMeta
 	if option.Playlist {
-		videos, err := extractPlaylist(htmlMeta.Aid)
+		var videos []*Video
+		if strings.Contains(urlAddr, "tv.sohu.com/user") {
+			uid := extractUserID(urlAddr)
+			if uid == "" {
+				return nil, errors.New("uid empty")
+			}
+			videos, err = extractPlaylistOfZMT(uid)
+		} else {
+			htmlMeta, err = getHTMLMeta(urlAddr)
+			if err != nil {
+				return nil, err
+			}
+			videos, err = extractPlaylist(htmlMeta.Aid)
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -139,8 +157,15 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 				return nil, err
 			}
 
+			var realAddr string
+			if mp4PlayUrlVo.Servers == nil {
+				realAddr = result.Mp4PlayUrl
+			} else {
+				realAddr = mp4PlayUrlVo.Servers[0].Url
+			}
+
 			urlData := &extractors.Part{
-				URL:  mp4PlayUrlVo.Servers[0].Url,
+				URL:  realAddr,
 				Size: result.TotalBytes,
 				Ext:  "mp4",
 			}
@@ -161,6 +186,42 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 			Cover:   cover,
 		},
 	}, nil
+}
+
+func extractUserID(url string) string {
+	// 使用正则表达式提取数字部分
+	re := regexp.MustCompile(`\d+`)
+	matches := re.FindAllString(url, -1)
+	if len(matches) > 0 {
+		return matches[len(matches)-1]
+	}
+	return ""
+}
+
+// 获取自媒体主页视频
+func extractPlaylistOfZMT(uid string) ([]*Video, error) {
+	uri := fmt.Sprintf(`https://my.tv.sohu.com/user/wm/ta/v.do?uid=%s&pg=1&size=50`, uid)
+	body, err := request.Client.R().
+		SetHeader("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8").
+		SetHeader("Accept-Encoding", "gzip").
+		SetHeader("Content-Type", "application/json;charset=UTF-8").
+		SetHeader("Transfer-Encoding", "chunked").
+		SetHeader("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36").Get(uri)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var videos []*Video
+	gjson.ParseBytes(body.Body()).Get("data.list").ForEach(func(key, value gjson.Result) bool {
+		videos = append(videos, &Video{
+			Title: value.Get("title").String(),
+			URL:   value.Get("url").String(),
+			Cover: value.Get("cover640").String(),
+		})
+		return true
+	})
+	return videos, nil
 }
 
 // 获取主页视频

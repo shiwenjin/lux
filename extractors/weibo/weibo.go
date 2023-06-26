@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"github.com/tidwall/gjson"
 	"io"
 	"net/http"
 	netURL "net/url"
@@ -221,40 +222,33 @@ func New() extractors.Extractor {
 
 // Extract is the main function to extract the data.
 func (e *extractor) Extract(url string, option extractors.Options) ([]*extractors.Data, error) {
-	if !strings.Contains(url, "m.weibo.cn") {
-		if strings.Contains(url, "weibo.com/tv/show/") {
-			return downloadWeiboTV(url)
-		} else if strings.Contains(url, "video.h5.weibo.cn") {
-			return downloadWeiboVideo(url)
-		}
-		url = strings.Replace(url, "weibo.com", "m.weibo.cn", 1)
-	}
-	html, err := request.Get(url, url, nil)
+	urlInfo, err := netURL.Parse(url)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, errors.New("parse share url fail")
 	}
-	titles := utils.MatchOneOf(
-		html, `"content2": "(.+?)",`, `"status_title": "(.+?)",`,
-	)
-	if titles == nil || len(titles) < 2 {
-		return nil, errors.WithStack(extractors.ErrURLParseFailed)
+	var videoId string
+	if strings.Contains(url, "show?fid=") {
+		if len(urlInfo.Query()["fid"]) <= 0 {
+			return nil, errors.New("can not parse video id from share url")
+		}
+		videoId = urlInfo.Query()["fid"][0]
+	} else {
+		videoId = strings.ReplaceAll(urlInfo.Path, "/tv/show/", "")
 	}
-	title := titles[1]
 
-	realURLs := utils.MatchOneOf(
-		html, `"stream_url_hd": "(.+?)"`, `"stream_url": "(.+?)"`,
-	)
-	if realURLs == nil || len(realURLs) < 2 {
-		return nil, errors.WithStack(extractors.ErrURLParseFailed)
+	info, err := parseVideoID(videoId)
+	if err != nil {
+		return nil, err
 	}
-	realURL := realURLs[1]
 
-	size, err := request.Size(realURL, url)
+	resp, err := request.Client.R().Get(info.VideoUrl)
+
+	size := resp.Size()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	urlData := &extractors.Part{
-		URL:  realURL,
+		URL:  info.VideoUrl,
 		Size: size,
 		Ext:  "mp4",
 	}
@@ -268,10 +262,56 @@ func (e *extractor) Extract(url string, option extractors.Options) ([]*extractor
 	return []*extractors.Data{
 		{
 			Site:    "微博 weibo.com",
-			Title:   title,
+			Title:   info.Title,
 			Type:    extractors.DataTypeVideo,
 			Streams: streams,
 			URL:     url,
+			Cover:   info.CoverUrl,
 		},
 	}, nil
+}
+
+func parseVideoID(videoId string) (*VideoParseInfo, error) {
+	reqUrl := fmt.Sprintf("https://h5.video.weibo.com/api/component?page=/show/%s", videoId)
+	client := request.Client
+	videoRes, err := client.R().
+		SetHeader("cookie", "login_sid_t=6b652c77c1a4bc50cb9d06b24923210d; cross_origin_proto=SSL; WBStorage=2ceabba76d81138d|undefined; _s_tentry=passport.weibo.com; Apache=7330066378690.048.1625663522444; SINAGLOBAL=7330066378690.048.1625663522444; ULV=1625663522450:1:1:1:7330066378690.048.1625663522444:; TC-V-WEIBO-G0=35846f552801987f8c1e8f7cec0e2230; SUB=_2AkMXuScYf8NxqwJRmf8RzmnhaoxwzwDEieKh5dbDJRMxHRl-yT9jqhALtRB6PDkJ9w8OaqJAbsgjdEWtIcilcZxHG7rw; SUBP=0033WrSXqPxfM72-Ws9jqgMF55529P9D9W5Qx3Mf.RCfFAKC3smW0px0; XSRF-TOKEN=JQSK02Ijtm4Fri-YIRu0-vNj").
+		SetHeader("referer", "https://h5.video.weibo.com/show/"+videoId).
+		SetHeader("content-type", "application/x-www-form-urlencoded").
+		SetHeader("user-agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1").
+		SetBody([]byte(`data={"Component_Play_Playinfo":{"oid":"` + videoId + `"}}`)).
+		Post(reqUrl)
+	if err != nil {
+		return nil, err
+	}
+	data := gjson.GetBytes(videoRes.Body(), "data.Component_Play_Playinfo")
+	var videoUrl string
+	data.Get("urls").ForEach(func(key, value gjson.Result) bool {
+		if len(videoUrl) == 0 {
+			// 第一条码率最高
+			videoUrl = "https:" + value.String()
+		}
+		return true
+	})
+	parseInfo := &VideoParseInfo{
+		Title:    data.Get("title").String(),
+		VideoUrl: videoUrl,
+		CoverUrl: "https:" + data.Get("cover_image").String(),
+	}
+	parseInfo.Author.Name = data.Get("author").String()
+	parseInfo.Author.Avatar = "https:" + data.Get("avatar").String()
+
+	return parseInfo, nil
+}
+
+type VideoParseInfo struct {
+	Author struct {
+		Uid    string `json:"uid"`    // 作者id
+		Name   string `json:"name"`   // 作者名称
+		Avatar string `json:"avatar"` // 作者头像
+	} `json:"author"`
+	Title    string `json:"title"`     // 描述
+	VideoUrl string `json:"video_url"` // 视频播放地址
+	MusicUrl string `json:"music_url"` // 音乐播放地址
+	CoverUrl string `json:"cover_url"` // 视频封面地址
 }

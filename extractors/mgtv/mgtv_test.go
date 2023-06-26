@@ -53,8 +53,9 @@ func TestDownload(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := New().Extract(tt.args.URL, extractors.Options{Playlist: tt.playlist})
+			data, err := New().Extract(tt.args.URL, extractors.Options{Playlist: tt.playlist})
 			assert.NoError(t, err)
+			assert.NotEmpty(t, data)
 		})
 
 	}

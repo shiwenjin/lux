@@ -49,6 +49,8 @@ func Extract(u string, option Options) ([]*Data, error) {
 			domain = "cctv"
 		} else if u.Host == "my.tv.sohu.com" {
 			domain = "sohu"
+		} else if u.Host == "video.weishi.qq.com" {
+			domain = "weishi"
 		} else {
 			domain = utils.Domain(u.Host)
 		}

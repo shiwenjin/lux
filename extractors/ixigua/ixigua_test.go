@@ -16,7 +16,7 @@ func TestDownload(t *testing.T) {
 		{
 			name: "test 1",
 			args: test.Args{
-				URL:     "https://www.ixigua.com/7053389963487871502",
+				URL:     "https://www.ixigua.com/7040164572094792195",
 				Title:   "漫威斥巨资拍的《永恒族》，刚上架就被多国禁播，究竟拍了什么？",
 				Quality: "1080p",
 				Size:    313091514,
@@ -40,6 +40,14 @@ func TestDownload(t *testing.T) {
 				Size:    468324298,
 			},
 		}, {
+			name: "test 3",
+			args: test.Args{
+				URL:     "https://www.toutiao.com/video/7226902781586571816",
+				Title:   "非洲小伙娶9个老婆，生活像皇帝，非洲“韦小宝”生活大揭秘！",
+				Quality: "1080p",
+				Size:    468324298,
+			},
+		}, {
 			name: "主页视频",
 			args: test.Args{
 				URL:     "https://www.ixigua.com/home/53959751401/?list_entrance=homepage&video_card_type=shortvideo",
@@ -57,4 +65,11 @@ func TestDownload(t *testing.T) {
 			test.Check(t, tt.args, data[0])
 		})
 	}
+}
+
+func TestName(t *testing.T) {
+	t.Log(extractors.GetTopLevelDomain("https://www.bilibili.com/"))
+	t.Log(extractors.GetTopLevelDomain("https://haokan.baidu.com/"))
+	t.Log(extractors.GetTopLevelDomain("https://tv.cctv.com/"))
+	t.Log(extractors.GetTopLevelDomain("https://v.cctv.com"))
 }

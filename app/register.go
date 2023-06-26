@@ -2,6 +2,7 @@ package app
 
 import (
 	_ "github.com/iawia002/lux/extractors/acfun"
+	_ "github.com/iawia002/lux/extractors/baidu"
 	_ "github.com/iawia002/lux/extractors/bcy"
 	_ "github.com/iawia002/lux/extractors/bilibili"
 	_ "github.com/iawia002/lux/extractors/cctv"
@@ -20,6 +21,8 @@ import (
 	_ "github.com/iawia002/lux/extractors/mgtv"
 	_ "github.com/iawia002/lux/extractors/miaopai"
 	_ "github.com/iawia002/lux/extractors/netease"
+	_ "github.com/iawia002/lux/extractors/pear"
+	_ "github.com/iawia002/lux/extractors/pipix"
 	_ "github.com/iawia002/lux/extractors/pixivision"
 	_ "github.com/iawia002/lux/extractors/pornhub"
 	_ "github.com/iawia002/lux/extractors/qq"
@@ -35,6 +38,7 @@ import (
 	_ "github.com/iawia002/lux/extractors/vimeo"
 	_ "github.com/iawia002/lux/extractors/vk"
 	_ "github.com/iawia002/lux/extractors/weibo"
+	_ "github.com/iawia002/lux/extractors/weishi"
 	_ "github.com/iawia002/lux/extractors/ximalaya"
 	_ "github.com/iawia002/lux/extractors/xinpianchang"
 	_ "github.com/iawia002/lux/extractors/xvideos"

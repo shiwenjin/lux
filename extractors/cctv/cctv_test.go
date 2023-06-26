@@ -35,6 +35,13 @@ func TestReddit(t *testing.T) {
 				Title: "远方的家》 20210115 大运河（61） 运河边的津味儿生活",
 			},
 			playlist: true,
+		}, {
+			name: "返回的列表",
+			args: test.Args{
+				URL:   "https://v.cctv.com/2023/06/02/VIDE3ntRc8jMP3Cj13z05izb230602.shtml",
+				Title: "远方的家》 20210115 大运河（61） 运河边的津味儿生活",
+			},
+			playlist: true,
 		},
 	}
 	for _, tt := range tests {
