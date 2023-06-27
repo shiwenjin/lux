@@ -17,7 +17,7 @@ func TestReddit(t *testing.T) {
 		{
 			name: "返回的MP4",
 			args: test.Args{
-				URL:   "https://my.tv.sohu.com/us/338449973/438721391.shtml",
+				URL:   "https://tv.sohu.com/v/dXMvMzM4NDQ5OTczLzQzODcyMTM5MS5zaHRtbA==.html",
 				Title: "王二妮，金婷婷同唱《白毛女》选段，精彩的演唱，永不忘的经典。",
 			},
 		},

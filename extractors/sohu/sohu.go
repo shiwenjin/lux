@@ -42,6 +42,7 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 	}
 
 	var htmlMeta *tvSohuComHtmlMeta
+	htmlMeta, err = getHTMLMeta(urlAddr)
 	if option.Playlist {
 		var videos []*Video
 		if strings.Contains(urlAddr, "tv.sohu.com/user") {
@@ -51,10 +52,6 @@ func (e *extractor) Extract(urlAddr string, option extractors.Options) ([]*extra
 			}
 			videos, err = extractPlaylistOfZMT(uid)
 		} else {
-			htmlMeta, err = getHTMLMeta(urlAddr)
-			if err != nil {
-				return nil, err
-			}
 			videos, err = extractPlaylist(htmlMeta.Aid)
 		}
 
