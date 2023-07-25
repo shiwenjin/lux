@@ -20,7 +20,7 @@ import (
 const (
 	// Name is the name of this app.
 	Name    = "lux"
-	version = "v0.6.26"
+	version = "v0.7.25"
 )
 
 func init() {
@@ -302,7 +302,7 @@ func download(c *cli.Context, videoURL string) error {
 		return nil
 	}
 
-	defaultDownloader := downloader.New(downloader.Options{
+	option := downloader.Options{
 		Silent:         c.Bool("silent"),
 		InfoOnly:       c.Bool("info"),
 		Stream:         c.String("stream-format"),
@@ -319,7 +319,9 @@ func download(c *cli.Context, videoURL string) error {
 		Aria2Token:     c.String("aria2-token"),
 		Aria2Method:    c.String("aria2-method"),
 		Aria2Addr:      c.String("aria2-addr"),
-	})
+	}
+
+	defaultDownloader := downloader.New(option)
 	errors := make([]error, 0)
 	for _, item := range data {
 		if item.Err != nil {
@@ -333,7 +335,10 @@ func download(c *cli.Context, videoURL string) error {
 		}
 
 		if item.Cover != "" {
-			_ = c.Set("output-name", item.Title)
+			if option.OutputName == "" {
+				option.OutputName = item.Title
+			}
+			_ = c.Set("output-name", option.OutputName)
 			if err = download(c, item.Cover); err != nil {
 				errors = append(errors, err)
 			}

@@ -334,8 +334,16 @@ func (e *extractor) Extract(uri string, option extractors.Options) ([]*extractor
 	}
 	vid := vids[1]
 
-	more := utils.MatchOneOf(u, `window.__pinia=(.*?)</script>`)
-	moreJson := strings.ReplaceAll(more[1], "undefined", `""`)
+	if strings.Contains(uri, "page.om.qq.com") {
+		uri = `https://v.qq.com/x/page/` + vid + ".html"
+		u, err = request.Get(uri, uri, nil)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	more := utils.MatchOneOf(u, "window.(__pinia__|__PINIA__)=(.*?)</script>")
+	moreJson := strings.ReplaceAll(more[len(more)-1], "undefined", `""`)
 	if len(more) > 0 {
 		seriesJson := gjson.Parse(moreJson).Get("episodeMain.listData.0.list.0")
 		seriesJson.ForEach(func(key, value gjson.Result) bool {

@@ -15,6 +15,14 @@ func TestDownload(t *testing.T) {
 		{
 			name: "normal test",
 			args: test.Args{
+				URL:     "https://page.om.qq.com/page/OrJrlquA4iPzVETMWh-7ZpqQ0",
+				Title:   "世界杯第一期：100秒速成！“伪球迷”世界杯生存指南",
+				Size:    23759683,
+				Quality: "蓝光;(1080P)",
+			},
+		}, {
+			name: "normal test",
+			args: test.Args{
 				URL:     "https://v.qq.com/x/page/n0687peq62x.html",
 				Title:   "世界杯第一期：100秒速成！“伪球迷”世界杯生存指南",
 				Size:    23759683,
