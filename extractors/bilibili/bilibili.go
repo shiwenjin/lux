@@ -37,11 +37,11 @@ func genAPI(aid, cid, quality int, bvid string, bangumi bool, cookie string) (st
 		baseAPIURL string
 		params     string
 	)
-	if cookie != "" && utoken == "" {
+	if cookie != "" && strings.Contains(cookie, "SESSDATA") && utoken == "" {
 		utoken, err = request.Get(
 			fmt.Sprintf("%said=%d&cid=%d", bilibiliTokenAPI, aid, cid),
 			referer,
-			nil,
+			map[string]string{"Cookie": cookie},
 		)
 		if err != nil {
 			return "", err
@@ -356,6 +356,7 @@ func bilibiliDownload(options bilibiliOptions, extractOption extractors.Options)
 	// Get "accept_quality" and "accept_description"
 	// "accept_description":["超高清 8K","超清 4K","高清 1080P+","高清 1080P","高清 720P","清晰 480P","流畅 360P"],
 	// "accept_quality":[127，120,112,80,48,32,16],
+
 	api, err := genAPI(options.aid, options.cid, 127, options.bvid, options.bangumi, extractOption.Cookie)
 	if err != nil {
 		return extractors.EmptyData(options.url, err)

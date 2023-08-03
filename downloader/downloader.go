@@ -620,6 +620,17 @@ func (downloader *Downloader) Download(data *extractors.Data) error {
 			return err
 		}
 		downloader.bar.Finish()
+
+		if data.Type == extractors.DataTypeVideo {
+			partFilePath, err := utils.FilePath(title, stream.Parts[0].Ext, downloader.option.FileNameLength, downloader.option.OutputPath, false)
+			if err != nil {
+				return err
+			}
+
+			ss := []string{partFilePath}
+			return utils.MergeToMP4(ss, mergedFilePath, title)
+		}
+
 		return nil
 	}
 

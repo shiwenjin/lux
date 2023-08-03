@@ -241,6 +241,14 @@ func genStreams(vid, videoUrl string, data qqVideoInfo) (map[string]*extractors.
 						Size: size,
 					}
 				})
+			} else {
+				tsUrl := fmt.Sprintf("%s%s?vkey=%s", videoFormat.URL, videoResponse.Fn, videoResponse.Fvkey)
+				size, _ := request.Size(tsUrl, "")
+				parts = append(parts, &extractors.Part{
+					URL:  tsUrl,
+					Ext:  "mp4",
+					Size: size,
+				})
 			}
 
 			totalSize = lo.SumBy(parts, func(part *extractors.Part) int64 {
