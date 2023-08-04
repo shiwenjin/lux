@@ -72,7 +72,7 @@ func Extract(u string, option Options) ([]*Data, error) {
 
 	var cfgs *ini.File
 	var err error
-	if option.Cookie == "" {
+	if option.AutoCookie && option.Cookie == "" {
 		filename := "cookie.ini"
 		// 判断文件是否存在
 		if _, err := os.Stat(filename); os.IsNotExist(err) {

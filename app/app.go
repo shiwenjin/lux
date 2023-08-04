@@ -69,6 +69,14 @@ func New() *cli.App {
 				Aliases: []string{"c"},
 				Usage:   "Cookie",
 			},
+
+			&cli.BoolFlag{
+				Name:    "auto-cookie",
+				Aliases: []string{"ac"},
+				Value:   true,
+				Usage:   "自动生成本地Cookie",
+			},
+
 			&cli.BoolFlag{
 				Name:    "playlist",
 				Aliases: []string{"p"},
@@ -281,6 +289,7 @@ func download(c *cli.Context, videoURL string) error {
 		ThreadNumber:     int(c.Uint("thread")),
 		EpisodeTitleOnly: c.Bool("episode-title-only"),
 		Cookie:           c.String("cookie"),
+		AutoCookie:       c.Bool("auto-cookie"),
 		YoukuCcode:       c.String("youku-ccode"),
 		YoukuCkey:        c.String("youku-ckey"),
 		YoukuPassword:    c.String("youku-password"),

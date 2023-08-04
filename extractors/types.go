@@ -117,7 +117,8 @@ type Options struct {
 	// ThreadNumber defines how many threads will use in the extraction, only works when Playlist is true.
 	ThreadNumber int
 	Cookie       string
-
+	// 是否自动获取本地浏览器cookie
+	AutoCookie bool
 	// EpisodeTitleOnly indicates file name of each bilibili episode doesn't include the playlist title
 	EpisodeTitleOnly bool
 
